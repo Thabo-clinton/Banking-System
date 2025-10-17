@@ -1,0 +1,3 @@
+IND-1000|Alice|Ngwenya|Oodi
+IND-1001|Thabiso|Kubu|Villa 097
+CMP-2000|Builders web|Avenue street 464|+267 78994538

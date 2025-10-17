@@ -1,0 +1,2 @@
+IND-1000-A1|IND-1000|InvestmentAccount|13009.75|Gaborone
+IND-1000-A2|IND-1000|SavingsAccount|5001.25|Gaborone
