@@ -16,14 +16,14 @@ public class BankController {
         TextFileRepository.save(bank);
     }
 
-    public Customer addIndividualCustomer(String firstName, String surname, String address) {
-        Customer customer = bank.addIndividualCustomer(firstName, surname, address);
+    public Customer addIndividualCustomer(String firstName, String surname, String address, String branch) {
+        Customer customer = bank.addIndividualCustomer(firstName, surname, address, branch);
         saveData();
         return customer;
     }
 
-    public Customer addCompanyCustomer(String companyName, String address, String cellNumber) {
-        Customer customer = bank.addCompanyCustomer(companyName, address, cellNumber);
+    public Customer addCompanyCustomer(String companyName, String address, String cellNumber, String branch) {
+        Customer customer = bank.addCompanyCustomer(companyName, address, cellNumber, branch);
         saveData();
         return customer;
     }

@@ -7,24 +7,24 @@ public class ClerkController {
         this.bankController = bankController;
     }
 
-    public String addIndividualCustomer(String firstName, String surname, String address) {
+    public String addIndividualCustomer(String firstName, String surname, String address, String branch) {
         try {
-            if (firstName.isEmpty() || surname.isEmpty() || address.isEmpty()) {
+            if (firstName.isEmpty() || surname.isEmpty() || address.isEmpty() || branch.isEmpty()) {
                 return "All fields are required";
             }
-            Customer customer = bankController.addIndividualCustomer(firstName, surname, address);
+            Customer customer = bankController.addIndividualCustomer(firstName, surname, address, branch);
             return "Individual customer created successfully! ID: " + customer.getCustomerId();
         } catch (Exception e) {
             return "Error creating customer: " + e.getMessage();
         }
     }
 
-    public String addCompanyCustomer(String companyName, String address, String cellNumber) {
+    public String addCompanyCustomer(String companyName, String address, String cellNumber, String branch) {
         try {
-            if (companyName.isEmpty() || address.isEmpty() || cellNumber.isEmpty()) {
+            if (companyName.isEmpty() || address.isEmpty() || cellNumber.isEmpty() || branch.isEmpty()) {
                 return "All fields are required";
             }
-            Customer customer = bankController.addCompanyCustomer(companyName, address, cellNumber);
+            Customer customer = bankController.addCompanyCustomer(companyName, address, cellNumber, branch);
             return "Company customer created successfully! ID: " + customer.getCustomerId();
         } catch (Exception e) {
             return "Error creating customer: " + e.getMessage();
@@ -40,6 +40,11 @@ public class ClerkController {
 
             if (initialDeposit < 0) {
                 return "Initial deposit cannot be negative";
+            }
+
+            // Validate savings account minimum deposit
+            if (accountType.equals("savings") && initialDeposit < 1000) {
+                return "Savings account requires minimum deposit of $1000";
             }
 
             String[] extra = accountType.equals("cheque") ?
