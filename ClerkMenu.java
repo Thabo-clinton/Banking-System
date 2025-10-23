@@ -11,7 +11,7 @@ public class ClerkMenu {
 
     public void start() {
         while (true) {
-System.out.println("\n========== THABO NGWAKO ==========");
+            System.out.println("\n========== THABO NGWAKO ==========");
             System.out.println("1. Add individual customer");
             System.out.println("2. Add company customer");
             System.out.println("3. Create account for customer");
@@ -42,9 +42,12 @@ System.out.println("\n========== THABO NGWAKO ==========");
         String sn = sc.nextLine().trim();
         System.out.print("Address: ");
         String ad = sc.nextLine().trim();
-        Customer c = bank.addIndividualCustomer(fn, sn, ad);
+        System.out.print("Branch: ");
+        String branch = sc.nextLine().trim();
+
+        Customer c = bank.addIndividualCustomer(fn, sn, ad, branch);
         System.out.println("Individual customer created. ID: " + c.getCustomerId());
-          bank.saveData();  
+        bank.saveData();
     }
 
     private void addCompany() {
@@ -54,9 +57,12 @@ System.out.println("\n========== THABO NGWAKO ==========");
         String ad = sc.nextLine().trim();
         System.out.print("Cell number: ");
         String cell = sc.nextLine().trim();
-        Customer c = bank.addCompanyCustomer(cn, ad, cell);
+        System.out.print("Branch: ");
+        String branch = sc.nextLine().trim();
+
+        Customer c = bank.addCompanyCustomer(cn, ad, cell, branch);
         System.out.println("Company customer created. ID: " + c.getCustomerId());
-          bank.saveData();  
+        bank.saveData();
     }
 
     private void createAccount() {
@@ -71,6 +77,13 @@ System.out.println("\n========== THABO NGWAKO ==========");
         String type = sc.nextLine().trim().toLowerCase();
         System.out.print("Initial deposit: ");
         double amt = Double.parseDouble(sc.nextLine().trim());
+
+        // Validate savings account minimum deposit
+        if (type.equals("savings") && amt < 1000) {
+            System.out.println("Error: Savings account requires minimum deposit of $1000");
+            return;
+        }
+
         System.out.print("Branch: ");
         String br = sc.nextLine().trim();
         String[] extra = null;
@@ -83,13 +96,16 @@ System.out.println("\n========== THABO NGWAKO ==========");
         }
         c.openAccount(type, amt, br, extra != null ? extra : new String[0]);
         System.out.println("Account created.");
-          bank.saveData();  
+        bank.saveData();
     }
 
     private void viewAllCustomers() {
         bank.getCustomers().forEach(c -> {
             System.out.println(c);
-            c.getAccounts().forEach(a -> System.out.println("  --> " + a));
+            c.getAccounts().forEach(a -> {
+                String accountType = a.getClass().getSimpleName().replace("Account", "");
+                System.out.println("  --> " + a.getAccountNumber() + " (" + accountType + ") - Balance: $" + a.getBalance() + " - Branch: " + a.branch);
+            });
         });
     }
 }

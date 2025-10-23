@@ -1,5 +1,7 @@
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class Customer implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -19,15 +21,19 @@ public abstract class Customer implements Serializable {
     public abstract void openAccount(String type, double initialDeposit, String branch, String... extra);
 
     public void deposit(String accountNumber, double amount) {
+        System.out.println("DEBUG: Customer.deposit called");
         Account a = findAccount(accountNumber);
         a.deposit(amount);
         a.addTransaction(new Transaction("DEPOSIT", amount));
     }
 
     public boolean withdraw(String accountNumber, double amount) {
+        System.out.println("DEBUG: Customer.withdraw called");
         Account a = findAccount(accountNumber);
         boolean ok = a.withdraw(amount);
-        if (ok) a.addTransaction(new Transaction("WITHDRAW", amount));
+        if (ok) {
+            a.addTransaction(new Transaction("WITHDRAW", amount));
+        }
         return ok;
     }
 
@@ -41,7 +47,7 @@ public abstract class Customer implements Serializable {
         return Collections.unmodifiableList(accounts);
     }
 
-    Account findAccount(String accountNumber) {
+    protected Account findAccount(String accountNumber) {
         return accounts.stream()
                 .filter(a -> a.getAccountNumber().equals(accountNumber))
                 .findFirst()

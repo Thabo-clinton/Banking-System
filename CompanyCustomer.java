@@ -3,12 +3,14 @@ public class CompanyCustomer extends Customer {
     final int customerId;
     final String companyName;
     final String cellNumber;
+    private final String branch;
 
-    public CompanyCustomer(String companyName, String address, String cellNumber) {
+    public CompanyCustomer(String companyName, String address, String cellNumber, String branch) {
         super(null, companyName, address);
         this.customerId = idCounter++;
         this.companyName = companyName;
         this.cellNumber = cellNumber;
+        this.branch = branch;
     }
 
     @Override
@@ -19,9 +21,16 @@ public class CompanyCustomer extends Customer {
     @Override
     public void openAccount(String type, double initialDeposit, String branch, String... extra) {
         String accNo = getCustomerId() + "-A" + (accounts.size() + 1);
+        System.out.println("DEBUG: Opening account - Type: " + type + ", Initial Deposit: " + initialDeposit);
+
         switch (type.toLowerCase()) {
             case "savings":
+                // Enforce minimum deposit when creating savings account
+                if (initialDeposit < 1000) {
+                    throw new IllegalArgumentException("Minimum initial deposit for Savings Account is $1000");
+                }
                 accounts.add(new SavingsAccount(accNo, initialDeposit, branch, this));
+                System.out.println("DEBUG: Savings account created with balance: " + initialDeposit);
                 break;
             case "investment":
                 accounts.add(new InvestmentAccount(accNo, initialDeposit, branch, this));
@@ -33,5 +42,9 @@ public class CompanyCustomer extends Customer {
             default:
                 throw new IllegalArgumentException("Unknown account type");
         }
+    }
+
+    public String getBranch() {
+        return branch;
     }
 }

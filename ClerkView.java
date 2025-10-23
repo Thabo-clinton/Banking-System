@@ -106,36 +106,90 @@ public class ClerkView {
         return tabContent;
     }
 
+    @SuppressWarnings("unchecked")
     private void setupCustomersTable() {
         TableColumn<Customer, String> idCol = new TableColumn<>("Customer ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("customerId"));
+        idCol.setPrefWidth(120);
 
         TableColumn<Customer, String> typeCol = new TableColumn<>("Type");
         typeCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
                         cellData.getValue().getClass().getSimpleName().replace("Customer", "")
                 ));
+        typeCol.setPrefWidth(80);
 
         TableColumn<Customer, String> nameCol = new TableColumn<>("Name");
         nameCol.setCellValueFactory(cellData ->
                 new javafx.beans.property.SimpleStringProperty(
-                        cellData.getValue().firstName != null ?
-                                cellData.getValue().firstName + " " + cellData.getValue().surname :
-                                cellData.getValue().surname
+                        getCustomerDisplayName(cellData.getValue())
                 ));
+        nameCol.setPrefWidth(150);
 
         TableColumn<Customer, String> addressCol = new TableColumn<>("Address");
-        addressCol.setCellValueFactory(new PropertyValueFactory<>("address"));
+        addressCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(
+                        getCustomerAddress(cellData.getValue())
+                ));
+        addressCol.setPrefWidth(200);
 
-        TableColumn<Customer, Integer> accountsCol = new TableColumn<>("Accounts");
+        TableColumn<Customer, String> branchCol = new TableColumn<>("Branch");
+        branchCol.setCellValueFactory(cellData -> {
+            Customer customer = cellData.getValue();
+            String branch = "Unknown";
+            if (customer instanceof IndividualCustomer) {
+                branch = ((IndividualCustomer) customer).getBranch();
+            } else if (customer instanceof CompanyCustomer) {
+                branch = ((CompanyCustomer) customer).getBranch();
+            }
+            return new javafx.beans.property.SimpleStringProperty(branch);
+        });
+        branchCol.setPrefWidth(120);
+
+        TableColumn<Customer, String> accountsCol = new TableColumn<>("Account Types");
         accountsCol.setCellValueFactory(cellData ->
-                new javafx.beans.property.SimpleIntegerProperty(
-                        cellData.getValue().getAccounts().size()
-                ).asObject());
+                new javafx.beans.property.SimpleStringProperty(
+                        getAccountTypes(cellData.getValue())
+                ));
+        accountsCol.setPrefWidth(200);
 
-        customersTable.getColumns().addAll(idCol, typeCol, nameCol, addressCol, accountsCol);
+        customersTable.getColumns().addAll(idCol, typeCol, nameCol, addressCol, branchCol, accountsCol);
         customerData = FXCollections.observableArrayList();
         customersTable.setItems(customerData);
+    }
+
+    private String getCustomerDisplayName(Customer customer) {
+        if (customer.firstName != null) {
+            return customer.firstName + " " + customer.surname;
+        } else {
+            return customer.surname; // For company customers, surname contains company name
+        }
+    }
+
+    private String getCustomerAddress(Customer customer) {
+        // Directly access the address field from Customer class
+        return customer.address != null ? customer.address : "No address";
+    }
+
+    private String getAccountTypes(Customer customer) {
+        if (customer.getAccounts().isEmpty()) {
+            return "No accounts";
+        }
+
+        StringBuilder types = new StringBuilder();
+        for (Account account : customer.getAccounts()) {
+            if (account instanceof SavingsAccount) {
+                if (types.length() > 0) types.append(", ");
+                types.append("Savings");
+            } else if (account instanceof InvestmentAccount) {
+                if (types.length() > 0) types.append(", ");
+                types.append("Investment");
+            } else if (account instanceof ChequeAccount) {
+                if (types.length() > 0) types.append(", ");
+                types.append("Cheque");
+            }
+        }
+        return types.toString();
     }
 
     private VBox createAccountsTab() {
@@ -161,27 +215,70 @@ public class ClerkView {
         form.add(customerIdLabel, 0, 0);
         form.add(customerIdField, 1, 0);
 
+        // Customer Info Display
+        Label customerInfoLabel = new Label();
+        customerInfoLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-wrap-text: true;");
+        form.add(customerInfoLabel, 1, 1);
+
+        // Auto-populate branch when customer ID is entered
+        customerIdField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && !newVal.trim().isEmpty()) {
+                Customer customer = controller.findCustomerById(newVal.trim());
+                if (customer != null) {
+                    String customerDetails = "Customer: " + getCustomerDisplayName(customer);
+                    customerDetails += " | Address: " + getCustomerAddress(customer);
+
+                    // Get the first account's branch or show message
+                    if (!customer.getAccounts().isEmpty()) {
+                        Account firstAccount = customer.getAccounts().get(0);
+                        customerDetails += " | Previous branch: " + firstAccount.branch;
+                    } else {
+                        customerDetails += " | No previous accounts";
+                    }
+                    customerInfoLabel.setText(customerDetails);
+                } else {
+                    customerInfoLabel.setText("Customer not found.");
+                }
+            } else {
+                customerInfoLabel.setText("");
+            }
+        });
+
         // Account Type
         Label typeLabel = new Label("Account Type:");
         ComboBox<String> typeCombo = new ComboBox<>();
         typeCombo.getItems().addAll("savings", "investment", "cheque");
         typeCombo.setValue("savings");
-        form.add(typeLabel, 0, 1);
-        form.add(typeCombo, 1, 1);
+        form.add(typeLabel, 0, 2);
+        form.add(typeCombo, 1, 2);
 
         // Initial Deposit
         Label depositLabel = new Label("Initial Deposit:");
         TextField depositField = new TextField();
         depositField.setPromptText("0.00");
-        form.add(depositLabel, 0, 2);
-        form.add(depositField, 1, 2);
+        form.add(depositLabel, 0, 3);
+        form.add(depositField, 1, 3);
+
+        // Minimum deposit warning for savings
+        Label depositWarningLabel = new Label();
+        depositWarningLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #d97706;");
+        form.add(depositWarningLabel, 1, 4);
+
+        // Update warning when account type changes
+        typeCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if ("savings".equals(newVal)) {
+                depositWarningLabel.setText("Minimum deposit for Savings account: $1000");
+            } else {
+                depositWarningLabel.setText("");
+            }
+        });
 
         // Branch
         Label branchLabel = new Label("Branch:");
         TextField branchField = new TextField();
         branchField.setPromptText("Enter branch name");
-        form.add(branchLabel, 0, 3);
-        form.add(branchField, 1, 3);
+        form.add(branchLabel, 0, 5);
+        form.add(branchField, 1, 5);
 
         // Cheque Account Fields (initially hidden)
         VBox chequeFields = new VBox(10);
@@ -198,12 +295,19 @@ public class ClerkView {
                 new Label("Company Address:"), companyAddressField
         );
 
-        form.add(chequeFields, 0, 4, 2, 1);
+        form.add(chequeFields, 0, 6, 2, 1);
 
         // Show/hide cheque fields based on account type
         typeCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
             boolean isCheque = "cheque".equals(newVal);
             chequeFields.setVisible(isCheque);
+
+            // Show savings minimum deposit warning
+            if ("savings".equals(newVal)) {
+                depositWarningLabel.setText("Minimum deposit for Savings account: $1000");
+            } else {
+                depositWarningLabel.setText("");
+            }
         });
 
         // Create Account Button
@@ -218,6 +322,13 @@ public class ClerkView {
 
             try {
                 double initialDeposit = Double.parseDouble(depositField.getText());
+
+                // Validate savings account minimum deposit
+                if ("savings".equals(accountType) && initialDeposit < 1000) {
+                    showAlert("Error", "Savings account requires minimum deposit of $1000");
+                    return;
+                }
+
                 String employer = employerField.getText().trim();
                 String companyAddress = companyAddressField.getText().trim();
 
@@ -234,6 +345,8 @@ public class ClerkView {
                     branchField.clear();
                     employerField.clear();
                     companyAddressField.clear();
+                    customerInfoLabel.setText("");
+                    depositWarningLabel.setText("");
                     refreshCustomersTable();
                 }
             } catch (NumberFormatException ex) {
@@ -241,7 +354,7 @@ public class ClerkView {
             }
         });
 
-        form.add(createAccountBtn, 0, 5, 2, 1);
+        form.add(createAccountBtn, 0, 7, 2, 1);
 
         tabContent.getChildren().addAll(titleLabel, form);
         return tabContent;
@@ -287,6 +400,8 @@ public class ClerkView {
         surnameField.setPromptText("Surname");
         TextField addressField = new TextField();
         addressField.setPromptText("Address");
+        TextField branchField = new TextField();
+        branchField.setPromptText("Default Branch");
 
         grid.add(new Label("First Name:"), 0, 0);
         grid.add(firstNameField, 1, 0);
@@ -294,6 +409,8 @@ public class ClerkView {
         grid.add(surnameField, 1, 1);
         grid.add(new Label("Address:"), 0, 2);
         grid.add(addressField, 1, 2);
+        grid.add(new Label("Default Branch:"), 0, 3);
+        grid.add(branchField, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -302,7 +419,8 @@ public class ClerkView {
                 return controller.addIndividualCustomer(
                         firstNameField.getText().trim(),
                         surnameField.getText().trim(),
-                        addressField.getText().trim()
+                        addressField.getText().trim(),
+                        branchField.getText().trim()
                 );
             }
             return null;
@@ -335,6 +453,8 @@ public class ClerkView {
         addressField.setPromptText("Address");
         TextField cellNumberField = new TextField();
         cellNumberField.setPromptText("Cell Number");
+        TextField branchField = new TextField();
+        branchField.setPromptText("Default Branch");
 
         grid.add(new Label("Company Name:"), 0, 0);
         grid.add(companyNameField, 1, 0);
@@ -342,6 +462,8 @@ public class ClerkView {
         grid.add(addressField, 1, 1);
         grid.add(new Label("Cell Number:"), 0, 2);
         grid.add(cellNumberField, 1, 2);
+        grid.add(new Label("Default Branch:"), 0, 3);
+        grid.add(branchField, 1, 3);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -350,7 +472,8 @@ public class ClerkView {
                 return controller.addCompanyCustomer(
                         companyNameField.getText().trim(),
                         addressField.getText().trim(),
-                        cellNumberField.getText().trim()
+                        cellNumberField.getText().trim(),
+                        branchField.getText().trim()
                 );
             }
             return null;
@@ -367,6 +490,16 @@ public class ClerkView {
     private void refreshCustomersTable() {
         List<Customer> customers = controller.getAllCustomers();
         customerData.setAll(customers);
+
+        // Debug: Print customer details to console
+        System.out.println("=== CUSTOMER DATA ===");
+        for (Customer customer : customers) {
+            System.out.println("ID: " + customer.getCustomerId());
+            System.out.println("Name: " + getCustomerDisplayName(customer));
+            System.out.println("Address: " + getCustomerAddress(customer));
+            System.out.println("Type: " + customer.getClass().getSimpleName());
+            System.out.println("---");
+        }
     }
 
     private void showAlert(String title, String message) {

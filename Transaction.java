@@ -1,5 +1,6 @@
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Transaction implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -13,8 +14,26 @@ public class Transaction implements Serializable {
         this.timestamp = LocalDateTime.now();
     }
 
+    // GETTER METHODS - TableView needs these
+    public String getType() {
+        return type;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    // Helper method to get formatted date string
+    public String getFormattedTimestamp() {
+        return timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
     @Override
     public String toString() {
-        return timestamp + " | " + type + " | " + amount;
+        return getFormattedTimestamp() + " | " + type + " | " + amount;
     }
 }
