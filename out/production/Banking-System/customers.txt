@@ -1,6 +1,0 @@
-IND-1000|Alice|Ngwenya|Oodi|Gaborone
-IND-1001|Thabiso|Kubu|Villa 097|Main Branch
-CMP-2000|Builders web|Avenue street 464|+267 78994538|dukwi
-IND-1002|Thabang|Mosinyi|3rd Avenue|Gaborone
-CMP-2001|The Charlie Brothers|11th back streets|72755242|Francistown
-IND-1003|Jacob|Darren|Orlando 2345|Gaborone
