@@ -21,7 +21,6 @@ public abstract class Customer implements Serializable {
     public abstract void openAccount(String type, double initialDeposit, String branch, String... extra);
 
     public void deposit(String accountNumber, double amount) {
-        System.out.println("DEBUG: Customer.deposit called");
         Account a = findAccount(accountNumber);
         a.deposit(amount);
         a.addTransaction(new Transaction("DEPOSIT", amount));
