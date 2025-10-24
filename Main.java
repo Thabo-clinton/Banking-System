@@ -4,12 +4,11 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
     private BankController bankController;
-    private LoginController loginController;
 
     @Override
     public void start(Stage primaryStage) {
         bankController = new BankController("Acme Bank");
-        loginController = new LoginController(bankController);
+        LoginController loginController = new LoginController(bankController);
 
         LoginView loginView = new LoginView(loginController, primaryStage);
         Scene scene = new Scene(loginView.getView(), 800, 600);
